@@ -47,7 +47,13 @@ cd backend && npx prisma migrate deploy && npm start
 
 ## Proxmox deployment
 
-On a Debian LXC container (as root):
+**Recommended (disaster recovery one-liner on Proxmox host):**
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/debugthings/proxmox-apps/main/ct/timer-app.sh)"
+```
+
+Or manually inside a Debian LXC:
 
 ```bash
 git clone https://github.com/debugthings/wifi-control.git /tmp/wifi-control
