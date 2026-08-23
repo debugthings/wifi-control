@@ -1,0 +1,16 @@
+[Unit]
+Description=Mock OpenWRT ubus server (lab testing)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/repos/wifi-control/scripts
+Environment=MOCK_UBUS_PORT=8080
+Environment=MOCK_UBUS_USER=wifi-control
+Environment=MOCK_UBUS_PASS=testpass123
+ExecStart=/usr/bin/node mock-ubus-server.mjs
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

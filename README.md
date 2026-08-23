@@ -47,11 +47,61 @@ cd backend && npx prisma migrate deploy && npm start
 
 ## Proxmox deployment
 
+On a Debian LXC container (as root):
+
 ```bash
-bash install.sh   # inside a Debian LXC container
+git clone https://github.com/debugthings/wifi-control.git /tmp/wifi-control
+cd /tmp/wifi-control
+bash install.sh
 ```
 
-Service listens on port **3002**. Optional NGINX reverse proxy to your domain.
+Or from your workstation if the LXC is SSH-reachable:
+
+```bash
+./scripts/deploy-remote.sh root@your-lxc-host
+```
+
+For WSL/local user-space install (no root):
+
+```bash
+./scripts/install-local.sh
+systemctl --user status wifi-control   # http://127.0.0.1:3002
+```
+
+Service listens on port **3002**. Optional NGINX reverse proxy to your domain (see below).
+
+## NGINX / HTTPS (wifi.debugthings.com)
+
+On your edge proxy host:
+
+```bash
+sudo ./deploy/nginx/install-nginx-site.sh 10.x.x.x:3002   # LXC IP
+sudo certbot --nginx -d wifi.debugthings.com
+```
+
+Config template: [`deploy/nginx/wifi.debugthings.com.conf`](deploy/nginx/wifi.debugthings.com.conf)
+
+## OpenWRT AP bootstrap
+
+On each AP (as root, copy `openwrt/` first):
+
+```bash
+cd openwrt/scripts && ./bootstrap-ap.sh
+```
+
+Or remotely:
+
+```bash
+./scripts/bootstrap-remote-ap.sh root@192.168.1.1
+```
+
+For local lab testing without hardware:
+
+```bash
+./scripts/bootstrap-lab-ap.sh          # starts mock ubus on :8080
+source ~/.local/opt/wifi-control/lab-ap.env
+./scripts/configure-initial.sh         # PIN 1234, adds lab AP + TestNet SSID
+```
 
 ## API
 
