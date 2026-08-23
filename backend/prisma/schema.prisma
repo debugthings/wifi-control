@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Settings {
+  id           Int      @id @default(1)
+  adminPinHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AccessPoint {
+  id           String    @id
+  name         String
+  host         String
+  ubusUrl      String    @default("/ubus")
+  ubusUsername String
+  ubusPassword String
+  useHttps     Boolean   @default(false)
+  enabled      Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  networks     Network[]
+}
+
+model Network {
+  id            String      @id
+  accessPointId String
+  accessPoint   AccessPoint @relation(fields: [accessPointId], references: [id], onDelete: Cascade)
+  label         String
+  uciSection    String
+  ssid          String?
+  enabled       Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  schedule      Schedule?
+
+  @@unique([accessPointId, uciSection])
+}
+
+model Schedule {
+  id        Int      @id @default(autoincrement())
+  networkId String   @unique
+  network   Network  @relation(fields: [networkId], references: [id], onDelete: Cascade)
+  enabled   Boolean  @default(false)
+  offTime   String
+  onTime    String
+  days      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

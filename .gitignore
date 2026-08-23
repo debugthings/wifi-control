@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.local
+*.db
+*.db-journal
+backend/public/*
+!backend/public/.gitkeep
+frontend/dist/
+.DS_Store

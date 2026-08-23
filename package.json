@@ -1,0 +1,16 @@
+{
+  "name": "wifi-control",
+  "version": "1.0.0",
+  "description": "OpenWRT WiFi control SPA with ubus JSON-RPC",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:deploy": "npm run build:frontend && npm run copy:frontend && npm run build:backend",
+    "copy:frontend": "mkdir -p backend/public && cp -r frontend/dist/* backend/public/",
+    "test:backend": "cd backend && npm test"
+  },
+  "license": "MIT"
+}

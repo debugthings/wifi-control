@@ -1,0 +1,21 @@
+{
+  "wifi-control": {
+    "description": "WiFi control app — wireless UCI + crontab only",
+    "read": {
+      "uci": ["wireless"],
+      "file": {
+        "/etc/crontabs/root": ["read"]
+      }
+    },
+    "write": {
+      "uci": ["wireless"],
+      "file": {
+        "/etc/crontabs/root": ["write"]
+      },
+      "ubus": {
+        "rc": ["*"],
+        "service": ["*"]
+      }
+    }
+  }
+}
