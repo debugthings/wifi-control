@@ -36,7 +36,14 @@ pkg_install() {
 
 echo "==> Installing packages..."
 pkg_update
-pkg_install uhttpd-mod-ubus rpcd rpcd-mod-file rpcd-mod-uci
+# OpenWrt 25.12+: UCI is built into rpcd (rpcd-mod-uci removed).
+# Optionally install rpcd-mod-uci on older releases that still ship it.
+pkg_install uhttpd-mod-ubus rpcd rpcd-mod-file
+if command -v apk >/dev/null 2>&1; then
+  apk add rpcd-mod-uci >/dev/null 2>&1 || true
+elif command -v opkg >/dev/null 2>&1; then
+  opkg install rpcd-mod-uci >/dev/null 2>&1 || true
+fi
 
 echo "==> Installing toggle script..."
 install -m 755 "$TOGGLE_SRC" "$TOGGLE_DEST"

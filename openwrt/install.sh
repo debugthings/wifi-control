@@ -47,7 +47,14 @@ fetch() {
 
 echo "==> Installing packages..."
 pkg_update
-pkg_install uhttpd-mod-ubus rpcd rpcd-mod-file rpcd-mod-uci
+# OpenWrt 25.12+: UCI is built into rpcd (rpcd-mod-uci no longer exists).
+# 24.10 and older may still ship rpcd-mod-uci — install it only if available.
+pkg_install uhttpd-mod-ubus rpcd rpcd-mod-file
+if command -v apk >/dev/null 2>&1; then
+  apk add rpcd-mod-uci >/dev/null 2>&1 || true
+elif command -v opkg >/dev/null 2>&1; then
+  opkg install rpcd-mod-uci >/dev/null 2>&1 || true
+fi
 
 # openssl used for password hash (usually present; install if missing)
 if ! command -v openssl >/dev/null 2>&1; then
