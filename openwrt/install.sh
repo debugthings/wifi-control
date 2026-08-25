@@ -91,10 +91,19 @@ else
   SECTION="rpcd.@login[${LOGIN_INDEX}]"
 fi
 
+# Hash the password. Note: $p$name means "use /etc/shadow for system user name",
+# NOT plaintext — so we must store a crypt hash ($1$... from uhttpd -m / openssl).
+if command -v uhttpd >/dev/null 2>&1; then
+  HASH="$(uhttpd -m "$PASS")"
+elif command -v openssl >/dev/null 2>&1; then
+  HASH="$(openssl passwd -1 "$PASS")"
+else
+  echo "Need uhttpd or openssl to hash the rpcd password." >&2
+  exit 1
+fi
+
 uci set "${SECTION}.username=${UBUS_USER}"
-# $p$ = plaintext; rpcd stores a hash (do not use broken \$1\$\$openssl embedding)
-uci set "${SECTION}.password=\$p\$${PASS}"
-# Ensure ACL group lists (idempotent-ish: delete + re-add)
+uci set "${SECTION}.password=${HASH}"
 uci -q delete "${SECTION}.read" || true
 uci -q delete "${SECTION}.write" || true
 uci add_list "${SECTION}.read=wifi-control"
