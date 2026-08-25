@@ -29,16 +29,17 @@ model AccessPoint {
 }
 
 model Network {
-  id            String      @id
+  id            String               @id
   accessPointId String
-  accessPoint   AccessPoint @relation(fields: [accessPointId], references: [id], onDelete: Cascade)
+  accessPoint   AccessPoint          @relation(fields: [accessPointId], references: [id], onDelete: Cascade)
   label         String
   uciSection    String
   ssid          String?
-  enabled       Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  enabled       Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
   schedule      Schedule?
+  groupMembers  NetworkGroupMember[]
 
   @@unique([accessPointId, uciSection])
 }
@@ -53,4 +54,21 @@ model Schedule {
   days      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model NetworkGroup {
+  id        String               @id
+  name      String
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  members   NetworkGroupMember[]
+}
+
+model NetworkGroupMember {
+  groupId   String
+  networkId String
+  group     NetworkGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  network   Network      @relation(fields: [networkId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, networkId])
 }

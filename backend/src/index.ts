@@ -6,6 +6,7 @@ import authRoutes from './routes/auth';
 import accessPointRoutes from './routes/accessPoints';
 import networkRoutes from './routes/networks';
 import scheduleRoutes from './routes/schedules';
+import groupRoutes from './routes/groups';
 
 export const app = express();
 const port = process.env.PORT || 3002;
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/access-points', accessPointRoutes);
 app.use('/api/networks', networkRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/groups', groupRoutes);
 
 app.use(express.static(path.join(__dirname, '../public')));
 

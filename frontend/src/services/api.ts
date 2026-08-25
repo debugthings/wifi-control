@@ -2,7 +2,9 @@ import axios from 'axios';
 import type {
   AccessPoint,
   AuthSettings,
-  DiscoveredIface,
+  CreateAccessPointResponse,
+  DiscoverResult,
+  NetworkGroupStatus,
   NetworkSchedule,
   NetworkStatus,
 } from '../types';
@@ -63,14 +65,17 @@ export const getAccessPoints = () =>
   api.get<AccessPoint[]>('/access-points').then((r) => r.data);
 
 export const createAccessPoint = (data: {
-  id: string;
+  id?: string;
   name: string;
   host: string;
   ubusUsername: string;
   ubusPassword: string;
   ubusUrl?: string;
   useHttps?: boolean;
-}) => api.post<AccessPoint>('/access-points', data).then((r) => r.data);
+}) =>
+  api
+    .post<CreateAccessPointResponse>('/access-points', data)
+    .then((r) => r.data);
 
 export const deleteAccessPoint = (id: string) =>
   api.delete<{ success: boolean }>(`/access-points/${id}`).then((r) => r.data);
@@ -78,9 +83,9 @@ export const deleteAccessPoint = (id: string) =>
 export const testAccessPoint = (id: string) =>
   api.post<{ ok: boolean }>(`/access-points/${id}/test`).then((r) => r.data);
 
-export const discoverIfaces = (id: string) =>
+export const discoverIfaces = (id: string, sync = true) =>
   api
-    .post<{ ifaces: DiscoveredIface[] }>(`/access-points/${id}/discover`)
+    .post<DiscoverResult>(`/access-points/${id}/discover`, { sync })
     .then((r) => r.data);
 
 export const createNetwork = (data: {
@@ -93,3 +98,25 @@ export const createNetwork = (data: {
 
 export const deleteNetwork = (id: string) =>
   api.delete<{ success: boolean }>(`/networks/${id}`).then((r) => r.data);
+
+export const getGroups = () =>
+  api.get<{ groups: NetworkGroupStatus[] }>('/groups').then((r) => r.data);
+
+export const createGroup = (data: {
+  id?: string;
+  name: string;
+  networkIds: string[];
+}) => api.post<NetworkGroupStatus>('/groups', data).then((r) => r.data);
+
+export const updateGroup = (
+  id: string,
+  data: { name?: string; networkIds?: string[] }
+) => api.put<NetworkGroupStatus>(`/groups/${id}`, data).then((r) => r.data);
+
+export const deleteGroup = (id: string) =>
+  api.delete<{ success: boolean }>(`/groups/${id}`).then((r) => r.data);
+
+export const toggleGroup = (id: string, enabled: boolean) =>
+  api
+    .post<NetworkGroupStatus>(`/groups/${id}/toggle`, { enabled })
+    .then((r) => r.data);

@@ -3,14 +3,15 @@ import { prisma } from '../index';
 import { requirePin } from '../middleware/pinAuth';
 import { encrypt } from '../utils/encryption';
 import { paramId } from '../utils/params';
-import {
-  discoverWifiIfaces,
-  testConnection,
-} from '../services/openwrt';
+import { testConnection, discoverWifiIfaces } from '../services/openwrt';
 import {
   sanitizeAccessPoint,
   toAccessPointConfig,
 } from '../services/accessPointHelpers';
+import {
+  slugifyId,
+  syncNetworksFromAp,
+} from '../services/networkSync';
 
 const router = express.Router();
 
@@ -38,14 +39,16 @@ router.post('/', requirePin, async (req, res) => {
       useHttps?: boolean;
     };
 
-  if (!id || !name || !host || !ubusUsername || !ubusPassword) {
+  if (!name || !host || !ubusUsername || !ubusPassword) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+
+  const apId = (id && id.trim()) || slugifyId(name);
 
   try {
     const accessPoint = await prisma.accessPoint.create({
       data: {
-        id,
+        id: apId,
         name,
         host,
         ubusUsername,
@@ -54,7 +57,31 @@ router.post('/', requirePin, async (req, res) => {
         useHttps: !!useHttps,
       },
     });
-    res.status(201).json(sanitizeAccessPoint(accessPoint));
+
+    let sync:
+      | { added: number; updated: number; skipped: number; ifaces: unknown[] }
+      | undefined;
+    let syncError: string | undefined;
+
+    try {
+      const result = await syncNetworksFromAp(prisma, accessPoint);
+      sync = {
+        added: result.added,
+        updated: result.updated,
+        skipped: result.skipped,
+        ifaces: result.ifaces,
+      };
+    } catch (error) {
+      syncError =
+        error instanceof Error ? error.message : 'SSID discovery failed';
+      console.error('AP create sync error:', error);
+    }
+
+    res.status(201).json({
+      ...sanitizeAccessPoint(accessPoint),
+      sync,
+      syncError,
+    });
   } catch (error) {
     console.error('Create AP error:', error);
     res.status(500).json({ error: 'Failed to create access point' });
@@ -124,6 +151,8 @@ router.post('/:id/test', requirePin, async (req, res) => {
 });
 
 router.post('/:id/discover', requirePin, async (req, res) => {
+  const syncRequested = (req.body as { sync?: boolean })?.sync !== false;
+
   try {
     const accessPoint = await prisma.accessPoint.findUnique({
       where: { id: paramId(req) },
@@ -132,8 +161,20 @@ router.post('/:id/discover', requirePin, async (req, res) => {
       return res.status(404).json({ error: 'Access point not found' });
     }
 
-    const ifaces = await discoverWifiIfaces(toAccessPointConfig(accessPoint));
-    res.json({ ifaces });
+    if (!syncRequested) {
+      const ifaces = await discoverWifiIfaces(
+        toAccessPointConfig(accessPoint)
+      );
+      return res.json({ ifaces, added: 0, updated: 0, skipped: 0 });
+    }
+
+    const result = await syncNetworksFromAp(prisma, accessPoint);
+    res.json({
+      ifaces: result.ifaces,
+      added: result.added,
+      updated: result.updated,
+      skipped: result.skipped,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Discovery failed';

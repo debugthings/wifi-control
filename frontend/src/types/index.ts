@@ -12,6 +12,18 @@ export interface AccessPoint {
   enabled: boolean;
 }
 
+export interface SyncSummary {
+  added: number;
+  updated: number;
+  skipped: number;
+  ifaces: DiscoveredIface[];
+}
+
+export interface CreateAccessPointResponse extends AccessPoint {
+  sync?: SyncSummary;
+  syncError?: string;
+}
+
 export interface NetworkSchedule {
   enabled: boolean;
   offTime: string;
@@ -43,6 +55,42 @@ export interface DiscoveredIface {
   device?: string;
   disabled: boolean;
   mode?: string;
+}
+
+export interface DiscoverResult {
+  ifaces: DiscoveredIface[];
+  added: number;
+  updated: number;
+  skipped: number;
+}
+
+export type GroupAggregateStatus =
+  | 'allOn'
+  | 'allOff'
+  | 'mixed'
+  | 'unreachable';
+
+export interface GroupMemberStatus {
+  id: string;
+  label: string;
+  ssid?: string | null;
+  uciSection: string;
+  accessPoint: { id: string; name: string };
+  disabled: boolean | null;
+  reachable: boolean;
+  error?: string;
+}
+
+export interface NetworkGroupStatus {
+  id: string;
+  name: string;
+  status: GroupAggregateStatus;
+  members: GroupMemberStatus[];
+  memberResults?: {
+    networkId: string;
+    ok: boolean;
+    error?: string;
+  }[];
 }
 
 export const WEEKDAYS = [
