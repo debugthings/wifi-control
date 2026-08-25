@@ -1,6 +1,8 @@
 #!/bin/sh
 # One-time bootstrap for an OpenWRT AP.
 # Run as root on the AP (via SSH or serial console).
+#
+# Package manager: apk on OpenWrt 25.12+, opkg on 24.10 and older.
 
 set -e
 
@@ -10,9 +12,31 @@ TOGGLE_SRC="${SCRIPT_DIR}/wifi-iface-toggle.sh"
 UBUS_USER="wifi-control"
 TOGGLE_DEST="/usr/local/bin/wifi-iface-toggle"
 
+pkg_update() {
+  if command -v apk >/dev/null 2>&1; then
+    apk update
+  elif command -v opkg >/dev/null 2>&1; then
+    opkg update
+  else
+    echo "Neither apk nor opkg found. Install packages manually." >&2
+    exit 1
+  fi
+}
+
+pkg_install() {
+  if command -v apk >/dev/null 2>&1; then
+    apk add "$@"
+  elif command -v opkg >/dev/null 2>&1; then
+    opkg install "$@"
+  else
+    echo "Neither apk nor opkg found." >&2
+    exit 1
+  fi
+}
+
 echo "==> Installing packages..."
-opkg update
-opkg install uhttpd-mod-ubus rpcd rpcd-mod-file rpcd-mod-uci
+pkg_update
+pkg_install uhttpd-mod-ubus rpcd rpcd-mod-file rpcd-mod-uci
 
 echo "==> Installing toggle script..."
 install -m 755 "$TOGGLE_SRC" "$TOGGLE_DEST"
