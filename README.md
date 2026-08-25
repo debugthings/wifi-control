@@ -27,16 +27,22 @@ npm run dev:frontend  # terminal 2 — port 5173
 
 ## OpenWRT AP setup
 
-On each AP (as root):
+On each AP (as root), one-liner:
 
-```bash
-# Copy openwrt/ folder to the AP, then:
-cd openwrt/scripts
-chmod +x bootstrap-ap.sh wifi-iface-toggle.sh
-./bootstrap-ap.sh
+```sh
+wget -qO- https://raw.githubusercontent.com/debugthings/wifi-control/main/openwrt/install.sh | sh
+```
+
+Or with curl:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/debugthings/wifi-control/main/openwrt/install.sh | sh
 ```
 
 Save the generated `wifi-control` password. In the admin UI, add the AP with its LAN IP and credentials.
+
+Offline / local copy alternative: copy `openwrt/` to the AP and run `./scripts/bootstrap-ap.sh`.
+
 
 ## Production build
 
@@ -89,13 +95,13 @@ Config template: [`deploy/nginx/wifi.debugthings.com.conf`](deploy/nginx/wifi.de
 
 ## OpenWRT AP bootstrap
 
-On each AP (as root, copy `openwrt/` first):
+On each AP (as root):
 
-```bash
-cd openwrt/scripts && ./bootstrap-ap.sh
+```sh
+wget -qO- https://raw.githubusercontent.com/debugthings/wifi-control/main/openwrt/install.sh | sh
 ```
 
-Or remotely:
+Or from your workstation over SSH (copies `openwrt/` then runs local bootstrap):
 
 ```bash
 ./scripts/bootstrap-remote-ap.sh root@192.168.1.1
