@@ -71,21 +71,40 @@ mkdir -p "$(dirname "$ACL_DEST")"
 fetch "${REPO_RAW}/openwrt/acl.d/wifi-control.json" "$ACL_DEST"
 chmod 644 "$ACL_DEST"
 
-if ! uci -q get rpcd."@${UBUS_USER}[0]" >/dev/null 2>&1; then
-  PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)"
+# Create or reset wifi-control login
+LOGIN_INDEX=""
+i=0
+while uci -q get "rpcd.@login[$i]" >/dev/null 2>&1; do
+  user="$(uci -q get "rpcd.@login[$i].username" || true)"
+  if [ "$user" = "$UBUS_USER" ]; then
+    LOGIN_INDEX="$i"
+    break
+  fi
+  i=$((i + 1))
+done
+
+PASS="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24)"
+if [ -z "$LOGIN_INDEX" ]; then
   uci add rpcd login
-  uci set "rpcd.@login[-1].username=${UBUS_USER}"
-  uci set "rpcd.@login[-1].password=\$1\$\$$(openssl passwd -1 "$PASS")"
-  uci add_list "rpcd.@login[-1].read=wifi-control"
-  uci add_list "rpcd.@login[-1].write=wifi-control"
-  uci commit rpcd
-  echo ""
-  echo "Created rpcd user: ${UBUS_USER}"
-  echo "Password (save this): ${PASS}"
-  echo ""
+  SECTION="rpcd.@login[-1]"
 else
-  echo "rpcd user ${UBUS_USER} already exists — skipping user creation"
+  SECTION="rpcd.@login[${LOGIN_INDEX}]"
 fi
+
+uci set "${SECTION}.username=${UBUS_USER}"
+# $p$ = plaintext; rpcd stores a hash (do not use broken \$1\$\$openssl embedding)
+uci set "${SECTION}.password=\$p\$${PASS}"
+# Ensure ACL group lists (idempotent-ish: delete + re-add)
+uci -q delete "${SECTION}.read" || true
+uci -q delete "${SECTION}.write" || true
+uci add_list "${SECTION}.read=wifi-control"
+uci add_list "${SECTION}.write=wifi-control"
+uci commit rpcd
+
+echo ""
+echo "rpcd user: ${UBUS_USER}"
+echo "Password (save this): ${PASS}"
+echo ""
 
 /etc/init.d/rpcd restart
 /etc/init.d/uhttpd restart

@@ -5,6 +5,11 @@
       "uci": ["wireless"],
       "file": {
         "/etc/crontabs/root": ["read"]
+      },
+      "ubus": {
+        "uci": ["get", "state", "configs", "changes"],
+        "file": ["read", "stat"],
+        "system": ["info", "board"]
       }
     },
     "write": {
@@ -13,6 +18,25 @@
         "/etc/crontabs/root": ["write"]
       },
       "ubus": {
+        "uci": [
+          "get",
+          "set",
+          "add",
+          "delete",
+          "rename",
+          "order",
+          "add_list",
+          "remove_list",
+          "commit",
+          "apply",
+          "confirm",
+          "rollback",
+          "reload_config",
+          "configs",
+          "state",
+          "changes"
+        ],
+        "file": ["read", "write", "stat"],
         "rc": ["*"],
         "service": ["*"]
       }

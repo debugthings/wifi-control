@@ -118,7 +118,11 @@ export class UbusClient {
 
     const [code, data] = body.result;
     if (code !== 0) {
-      throw new UbusError(`ubus call failed with code ${code}`, code);
+      const hints: Record<number, string> = {
+        6: 'permission denied (bad credentials or ACL — re-run OpenWrt install.sh and paste the new password)',
+      };
+      const hint = hints[code] ? ` — ${hints[code]}` : '';
+      throw new UbusError(`ubus call failed with code ${code}${hint}`, code);
     }
 
     return { code, data };
