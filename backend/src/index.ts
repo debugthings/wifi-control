@@ -44,7 +44,8 @@ process.on('SIGTERM', async () => {
 });
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(port, () => {
-    console.log(`WiFi Control running on http://localhost:${port}`);
+  const host = process.env.HOST || '0.0.0.0';
+  app.listen(Number(port), host, () => {
+    console.log(`WiFi Control running on http://${host}:${port}`);
   });
 }
